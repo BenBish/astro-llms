@@ -37,6 +37,9 @@
   "bugs": {
     "url": "https://github.com/BenBish/astro-llms/issues"
   },
+  "scripts": {
+    "test": "vitest run"
+  },
   "devDependencies": {
     "@types/node": "^26.1.2",
     "typescript": "^7.0.2",
