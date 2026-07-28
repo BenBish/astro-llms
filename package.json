@@ -1,0 +1,29 @@
+{
+  "name": "astro-llms",
+  "version": "0.1.0",
+  "description": "Content-collection-first Astro integration for generating llms.txt agent surfaces",
+  "type": "module",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "engines": { "node": ">=18.0.0" },
+  "peerDependencies": {
+    "astro": "^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0",
+    "zod": "^3.22.0 || ^4.0.0"
+  },
+  "keywords": ["astro", "integration", "llms-txt", "llms", "agent", "content-collections"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BenBish/astro-llms"
+  },
+  "bugs": {
+    "url": "https://github.com/BenBish/astro-llms/issues"
+  }
+}
