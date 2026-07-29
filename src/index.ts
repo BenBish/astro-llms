@@ -81,7 +81,8 @@ export function llmsTxt(rawOptions: unknown): AstroIntegration {
 			"astro:build:done"({ dir }) {
 				// Write all queued mirror files to the dist directory
 				const mirrors = getAndClearMirrors();
-				const distPath = dir.pathname;
+				// Use fileURLToPath for cross-platform path resolution
+				const distPath = fileURLToPath(dir);
 
 				for (const [path, content] of mirrors) {
 					const fullPath = join(distPath, path);

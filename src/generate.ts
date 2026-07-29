@@ -69,10 +69,10 @@ export function generate(
 		// Handle MDX policy
 		const mdEntries: CollectionEntry<string>[] = [];
 		for (const entry of included) {
-			if (entry.rawFilename?.endsWith(".mdx")) {
+			if (entry.filePath?.endsWith(".mdx")) {
 				if (options.mdxPolicy === "skip") {
 					warnings.push(
-						`Skipping MDX entry "${entry.slug}" in collection "${collectionName}" (mdxPolicy: "skip"). Use .md files for LLM surfaces.`,
+						`Skipping MDX entry "${entry.id}" in collection "${collectionName}" (mdxPolicy: "skip"). Use .md files for LLM surfaces.`,
 					);
 					continue;
 				}
@@ -86,19 +86,21 @@ export function generate(
 		// Group by section
 		const grouped = groupBySection(mdEntries, collectionSection);
 		for (const [sectionName, sectionEntries] of grouped) {
-			// Sort entries by date (descending), then by slug (ascending) as tiebreak
+			// Sort entries by date (descending), then by id (ascending) as tiebreak
 			sectionEntries.sort((a, b) => {
 				const dateA = normalizeDate(
 					(a.data as Record<string, unknown>).date,
+					a.id,
 				);
 				const dateB = normalizeDate(
 					(b.data as Record<string, unknown>).date,
+					b.id,
 				);
 				if (dateA && dateB) {
 					if (dateA < dateB) return 1;
 					if (dateA > dateB) return -1;
 				}
-				return a.slug.localeCompare(b.slug);
+				return a.id.localeCompare(b.id);
 			});
 			sections.push({ name: sectionName, entries: sectionEntries });
 		}
@@ -131,7 +133,7 @@ export function generate(
 			const mirrorPath = buildMirrorUrl(
 				options.mirrorsPath,
 				entry.collection,
-				entry.slug,
+				entry.id,
 			);
 			const mirrorContent = buildMirrorFile(entry);
 			mirrors.set(mirrorPath, mirrorContent);

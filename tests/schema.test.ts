@@ -72,6 +72,23 @@ describe("LlmsTxtManualLinkSchema", () => {
 		expect(result.description).toBe("Source code repository");
 		expect(result.optional).toBe(true);
 	});
+
+	it("accepts relative paths starting with ./", () => {
+		const result = LlmsTxtManualLinkSchema.parse({
+			url: "./guide",
+			title: "Guide",
+		});
+		expect(result.url).toBe("./guide");
+	});
+
+	it("rejects bare strings that are neither URLs nor paths", () => {
+		expect(() =>
+			LlmsTxtManualLinkSchema.parse({
+				url: "not a url",
+				title: "Bad",
+			}),
+		).toThrow();
+	});
 });
 
 describe("LlmsTxtOptionsSchema", () => {

@@ -6,8 +6,15 @@ import type { LlmFields } from "./llmFields.js";
 /**
  * Normalize a date value to an ISO-8601 string for consistent sorting.
  * Accepts strings, Date objects, or numeric timestamps.
+ *
+ * @param value - The date value to normalize
+ * @param entryId - Optional entry identifier for warning messages
+ * @returns ISO-8601 string or undefined if the value is not a valid date
  */
-export function normalizeDate(value: unknown): string | undefined {
+export function normalizeDate(
+	value: unknown,
+	entryId?: string,
+): string | undefined {
 	if (value instanceof Date) {
 		return value.toISOString();
 	}
@@ -15,10 +22,16 @@ export function normalizeDate(value: unknown): string | undefined {
 		return new Date(value).toISOString();
 	}
 	if (typeof value === "string") {
-		// Already a string — return as-is if it looks like a valid date,
-		// otherwise return undefined so entry falls to slug-based tiebreak.
 		const d = new Date(value);
-		return isNaN(d.getTime()) ? undefined : d.toISOString();
+		if (isNaN(d.getTime())) {
+			if (entryId) {
+				console.warn(
+					`[astro-llms] Invalid date "${value}" in entry "${entryId}". Entries with unparseable dates are sorted by ID.`,
+				);
+			}
+			return undefined;
+		}
+		return d.toISOString();
 	}
 	return undefined;
 }
@@ -29,21 +42,31 @@ export function normalizeDate(value: unknown): string | undefined {
 export function buildMirrorUrl(
 	mirrorsPath: string,
 	collection: string,
-	slug: string,
+	id: string,
 ): string {
-	return `${mirrorsPath}${collection}/${slug}.md`;
+	return `${mirrorsPath}${collection}/${id}.md`;
 }
 
 /**
  * Escape a string value for safe inclusion in YAML frontmatter.
- * Escapes double quotes, backslashes, and newlines.
+ *
+ * Uses double-quoted YAML scalar encoding:
+ * - Backslashes and double quotes are escaped
+ * - Newlines and carriage returns are escaped
+ * - Leading/trailing whitespace is quoted (handled by YAML parser)
+ * - Strings starting with YAML special characters (`:`, `#`, `|`, `>`, `*`, `&`, `!`, `%`, `@`, `` ` ``) are preserved inside quotes
+ *
+ * This function wraps the value in double quotes, so the caller does not
+ * need to add them — the frontmatter template adds them.
  */
 export function escapeYamlValue(value: string): string {
+	// Escape backslashes first (must be first), then double quotes, then control chars
 	return value
 		.replace(/\\/g, "\\\\")
 		.replace(/"/g, '\\"')
 		.replace(/\n/g, "\\n")
-		.replace(/\r/g, "\\r");
+		.replace(/\r/g, "\\r")
+		.replace(/\t/g, "\\t");
 }
 
 /**
@@ -190,7 +213,7 @@ export function buildLlmsTxt(
 			const mirrorUrl = buildMirrorUrl(
 				section.mirrorsPath,
 				entry.collection,
-				entry.slug,
+				entry.id,
 			);
 			const description = getEntryDescription(entry);
 			const suffix = description ? `: ${description}` : "";

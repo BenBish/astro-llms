@@ -12,7 +12,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "scripts"
   ],
   "engines": {
     "node": ">=18.0.0"
@@ -38,6 +39,7 @@
     "url": "https://github.com/BenBish/astro-llms/issues"
   },
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "build": "tsc && node scripts/postbuild.mjs"
   }
 }

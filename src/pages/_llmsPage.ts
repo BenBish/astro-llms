@@ -1,3 +1,7 @@
+import type { APIContext } from "astro";
+import { generate } from "../generate.js";
+import { registerMirror } from "../mirrors.js";
+
 /**
  * Shared page endpoint builder for /llms.txt and /llms-full.txt.
  *
@@ -18,11 +22,8 @@ export function buildLlmsPage(
 		warnings: string[];
 	}) => string,
 ) {
-	return async function GET(context: import("astro").AstroContext) {
+	return async function GET(_context: APIContext) {
 		const config = JSON.parse(import.meta.env.__LLMS_CONFIG__);
-		const { generate } = await import("../generate.js");
-		const { registerMirror } = await import("../mirrors.js");
-
 		const collections = new Map();
 
 		for (const collectionConfig of config.collections) {
