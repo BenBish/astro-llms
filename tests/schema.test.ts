@@ -16,8 +16,8 @@ describe("MdxPolicySchema", () => {
 		expect(MdxPolicySchema.parse("raw")).toBe("raw");
 	});
 
-	it("accepts 'strip'", () => {
-		expect(MdxPolicySchema.parse("strip")).toBe("strip");
+	it("rejects 'strip' (no longer supported)", () => {
+		expect(() => MdxPolicySchema.parse("strip")).toThrow();
 	});
 
 	it("rejects invalid value", () => {
@@ -71,6 +71,23 @@ describe("LlmsTxtManualLinkSchema", () => {
 		expect(result.title).toBe("GitHub");
 		expect(result.description).toBe("Source code repository");
 		expect(result.optional).toBe(true);
+	});
+
+	it("accepts relative paths starting with ./", () => {
+		const result = LlmsTxtManualLinkSchema.parse({
+			url: "./guide",
+			title: "Guide",
+		});
+		expect(result.url).toBe("./guide");
+	});
+
+	it("rejects bare strings that are neither URLs nor paths", () => {
+		expect(() =>
+			LlmsTxtManualLinkSchema.parse({
+				url: "not a url",
+				title: "Bad",
+			}),
+		).toThrow();
 	});
 });
 

@@ -17,7 +17,7 @@ Existing Astro llms.txt integrations either target Starlight or scrape rendered 
 npm i astro-llms
 ```
 
-Peer dependencies: `astro` (4+), `zod` (3.22+).
+Peer dependencies: `astro` (4+), `zod` (4+).
 
 ## Quick start
 
@@ -82,7 +82,7 @@ npm run build
 This produces:
 
 - `/llms.txt` — the index file with H1, summary, and H2 sections
-- `/llms/articles/{slug}.md` — per-entry mirror files (one per included entry)
+- `/llms/articles/{id}.md` — per-entry mirror files (one per included entry, keyed by Astro's entry ID)
 
 ## Configuration
 
@@ -97,7 +97,7 @@ This produces:
 | `manualLinks` | `Array` | `[]` | Extra links to include in the index (API docs, RSS, etc.) |
 | `mirrorsPath` | `string` | `"/llms/"` | Subdirectory for per-entry .md mirrors |
 | `fullText` | `boolean` | `false` | Whether to generate `/llms-full.txt` |
-| `mdxPolicy` | `"skip" \| "raw" \| "strip"` | `"skip"` | How to handle MDX entries |
+| `mdxPolicy` | `"skip" \| "raw"` | `"skip"` | How to handle MDX entries |
 
 ### Collection config
 
@@ -181,11 +181,11 @@ The generated `llms.txt` follows the [llms.txt specification](https://llmstxt.or
 
 ## Writing
 
-- [Post Title](/llms/articles/post-slug.md): Description from frontmatter
+- [Post Title](/llms/articles/building-a-router-from-scratch.md): Description from frontmatter
 
 ## Projects
 
-- [Project Name](/llms/projects/project-slug.md)
+- [Project Name](/llms/projects/astro-llms.md)
 ```
 
 Per-entry mirrors include the entry's frontmatter as YAML and the original Markdown body.
@@ -196,7 +196,6 @@ Per-entry mirrors include the entry's frontmatter as YAML and the original Markd
 | --- | --- |
 | `"skip"` (default) | Skip MDX entries, emit a console warning |
 | `"raw"` | Include the raw `.mdx` source as the mirror body |
-| `"strip"` | Not yet implemented; treated as `"skip"` |
 
 Recommendation: use `.md` files for content that should appear in agent surfaces. MDX components don't translate cleanly to plain markdown.
 

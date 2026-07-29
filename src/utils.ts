@@ -4,6 +4,72 @@ import type { CollectionEntry } from "astro:content";
 import type { LlmFields } from "./llmFields.js";
 
 /**
+ * Normalize a date value to an ISO-8601 string for consistent sorting.
+ * Accepts strings, Date objects, or numeric timestamps.
+ *
+ * @param value - The date value to normalize
+ * @param entryId - Optional entry identifier for warning messages
+ * @returns ISO-8601 string or undefined if the value is not a valid date
+ */
+export function normalizeDate(
+	value: unknown,
+	entryId?: string,
+): string | undefined {
+	if (value instanceof Date) {
+		return value.toISOString();
+	}
+	if (typeof value === "number") {
+		return new Date(value).toISOString();
+	}
+	if (typeof value === "string") {
+		const d = new Date(value);
+		if (isNaN(d.getTime())) {
+			if (entryId) {
+				console.warn(
+					`[astro-llms] Invalid date "${value}" in entry "${entryId}". Entries with unparseable dates are sorted by ID.`,
+				);
+			}
+			return undefined;
+		}
+		return d.toISOString();
+	}
+	return undefined;
+}
+
+/**
+ * Build the mirror URL for an entry.
+ */
+export function buildMirrorUrl(
+	mirrorsPath: string,
+	collection: string,
+	id: string,
+): string {
+	return `${mirrorsPath}${collection}/${id}.md`;
+}
+
+/**
+ * Escape a string value for safe inclusion in YAML frontmatter.
+ *
+ * Uses double-quoted YAML scalar encoding:
+ * - Backslashes and double quotes are escaped
+ * - Newlines and carriage returns are escaped
+ * - Leading/trailing whitespace is quoted (handled by YAML parser)
+ * - Strings starting with YAML special characters (`:`, `#`, `|`, `>`, `*`, `&`, `!`, `%`, `@`, `` ` ``) are preserved inside quotes
+ *
+ * This function wraps the value in double quotes, so the caller does not
+ * need to add them — the frontmatter template adds them.
+ */
+export function escapeYamlValue(value: string): string {
+	// Escape backslashes first (must be first), then double quotes, then control chars
+	return value
+		.replace(/\\/g, "\\\\")
+		.replace(/"/g, '\\"')
+		.replace(/\n/g, "\\n")
+		.replace(/\r/g, "\\r")
+		.replace(/\t/g, "\\t");
+}
+
+/**
  * Type guard: check if an entry has llmFields shape.
  */
 export function hasLlmFields(
@@ -144,8 +210,11 @@ export function buildLlmsTxt(
 		lines.push(`## ${section.name}`);
 		lines.push("");
 		for (const entry of section.entries) {
-			const slug = entry.slug;
-			const mirrorUrl = `${section.mirrorsPath}${entry.collection}/${slug}.md`;
+			const mirrorUrl = buildMirrorUrl(
+				section.mirrorsPath,
+				entry.collection,
+				entry.id,
+			);
 			const description = getEntryDescription(entry);
 			const suffix = description ? `: ${description}` : "";
 			lines.push(`- [${entry.data.title}](${mirrorUrl})${suffix}`);
@@ -195,14 +264,14 @@ export function buildMirrorFile(
 
 	// Frontmatter
 	lines.push("---");
-	lines.push(`title: "${entry.data.title}"`);
+	lines.push(`title: "${escapeYamlValue(String(entry.data.title))}"`);
 	const description = getEntryDescription(entry);
 	if (description) {
-		lines.push(`description: "${description}"`);
+		lines.push(`description: "${escapeYamlValue(description)}"`);
 	}
 	const date = (entry.data as Record<string, unknown>).date;
 	if (date) {
-		lines.push(`date: "${String(date)}"`);
+		lines.push(`date: "${escapeYamlValue(String(date))}"`);
 	}
 	lines.push("---");
 	lines.push("");

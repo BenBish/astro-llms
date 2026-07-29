@@ -70,7 +70,10 @@ export function llmsTxt(rawOptions: unknown): AstroIntegration {
 					});
 				}
 
-				// Pass config to the page endpoints via Vite define
+				// Pass config to the page endpoints via Vite define.
+				// Note: mutating config.vite directly is a known Astro integration
+				// pattern (see astro docs on injectRoute + define). In Astro 4+,
+				// config.vite is always mutable.
 				config.vite ??= {};
 				(config.vite.define ??= {})["__LLMS_CONFIG__"] =
 					JSON.stringify(options);
@@ -78,7 +81,8 @@ export function llmsTxt(rawOptions: unknown): AstroIntegration {
 			"astro:build:done"({ dir }) {
 				// Write all queued mirror files to the dist directory
 				const mirrors = getAndClearMirrors();
-				const distPath = dir.pathname;
+				// Use fileURLToPath for cross-platform path resolution
+				const distPath = fileURLToPath(dir);
 
 				for (const [path, content] of mirrors) {
 					const fullPath = join(distPath, path);
