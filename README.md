@@ -82,7 +82,7 @@ npm run build
 This produces:
 
 - `/llms.txt` — the index file with H1, summary, and H2 sections
-- `/llms/articles/{slug}.md` — per-entry mirror files (one per included entry)
+- `/llms/articles/{id}.md` — per-entry mirror files (one per included entry, keyed by Astro's entry ID)
 
 ## Configuration
 
@@ -181,11 +181,11 @@ The generated `llms.txt` follows the [llms.txt specification](https://llmstxt.or
 
 ## Writing
 
-- [Post Title](/llms/articles/post-slug.md): Description from frontmatter
+- [Post Title](/llms/articles/building-a-router-from-scratch.md): Description from frontmatter
 
 ## Projects
 
-- [Project Name](/llms/projects/project-slug.md)
+- [Project Name](/llms/projects/astro-llms.md)
 ```
 
 Per-entry mirrors include the entry's frontmatter as YAML and the original Markdown body.
