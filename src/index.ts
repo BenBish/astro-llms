@@ -70,7 +70,10 @@ export function llmsTxt(rawOptions: unknown): AstroIntegration {
 					});
 				}
 
-				// Pass config to the page endpoints via Vite define
+				// Pass config to the page endpoints via Vite define.
+				// Note: mutating config.vite directly is a known Astro integration
+				// pattern (see astro docs on injectRoute + define). In Astro 4+,
+				// config.vite is always mutable.
 				config.vite ??= {};
 				(config.vite.define ??= {})["__LLMS_CONFIG__"] =
 					JSON.stringify(options);

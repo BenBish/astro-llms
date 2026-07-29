@@ -32,30 +32,33 @@ function mockEntry(
 	};
 }
 
-describe("isEntryIncluded", () => {
-	it("excludes entries with llm: false", () => {
-		const entry = mockEntry({ llm: false });
-		expect(isEntryIncluded(entry as any, true)).toBe(false);
-	});
+	describe("isEntryIncluded", () => {
+		it("excludes entries with llm: false", () => {
+			const entry = mockEntry({ llm: false });
+			expect(isEntryIncluded(entry as any, true)).toBe(false);
+		});
 
-	it("includes entries with llm: true", () => {
-		const entry = mockEntry({ llm: true });
-		expect(isEntryIncluded(entry as any, false)).toBe(true);
-	});
+		it("includes entries with llm: true", () => {
+			const entry = mockEntry({ llm: true });
+			expect(isEntryIncluded(entry as any, false)).toBe(true);
+		});
 
-	it("respects global defaultInclude when llm is not set", () => {
-		const entry = mockEntry({ llm: undefined });
-		expect(isEntryIncluded(entry as any, false)).toBe(false);
-		expect(isEntryIncluded(entry as any, true)).toBe(true);
-	});
+		it("falls back to defaultInclude when llm is undefined", () => {
+			// llm: undefined is a boolean value that is not true/false,
+			// so hasLlmFields passes but neither explicit check matches.
+			const entry = mockEntry({ llm: undefined });
+			expect(isEntryIncluded(entry as any, false)).toBe(false);
+			expect(isEntryIncluded(entry as any, true)).toBe(true);
+		});
 
-	it("includes entries without llm field when defaultInclude is true", () => {
-		const entry = mockEntry({});
-		// No llm field at all
-		delete (entry.data as Record<string, unknown>).llm;
-		expect(isEntryIncluded(entry as any, true)).toBe(true);
+		it("falls back to defaultInclude when llm field is missing", () => {
+			// No llm field at all — hasLlmFields returns false.
+			const entry = mockEntry({});
+			delete (entry.data as Record<string, unknown>).llm;
+			expect(isEntryIncluded(entry as any, true)).toBe(true);
+			expect(isEntryIncluded(entry as any, false)).toBe(false);
+		});
 	});
-});
 
 describe("groupBySection", () => {
 	it("groups entries by collection section", () => {

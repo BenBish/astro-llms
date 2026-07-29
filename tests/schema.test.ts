@@ -16,8 +16,8 @@ describe("MdxPolicySchema", () => {
 		expect(MdxPolicySchema.parse("raw")).toBe("raw");
 	});
 
-	it("accepts 'strip'", () => {
-		expect(MdxPolicySchema.parse("strip")).toBe("strip");
+	it("rejects 'strip' (no longer supported)", () => {
+		expect(() => MdxPolicySchema.parse("strip")).toThrow();
 	});
 
 	it("rejects invalid value", () => {

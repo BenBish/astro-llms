@@ -29,11 +29,35 @@ export type LlmsTxtCollectionConfig = z.infer<typeof LlmsTxtCollectionConfigSche
 /**
  * A manual link to include in the llms.txt index.
  */
+/**
+ * Validate that a URL string is either a valid absolute URL or a relative path.
+ */
+function isValidUrl(value: string): boolean {
+	try {
+		new URL(value);
+		return true;
+	} catch {
+		// Not a valid URL — accept if it looks like a path (starts with / or ./)
+		return /^\/|^\.\//.test(value);
+	}
+}
+
 export const LlmsTxtManualLinkSchema = z.object({
 	/**
 	 * URL path or full URL for the link.
 	 */
-	url: z.string().url().or(z.string().min(1)),
+	url: z
+		.string()
+		.url()
+		.or(
+			z
+				.string()
+				.min(1)
+				.refine(isValidUrl, {
+					message:
+						"url must be a valid URL (e.g. https://example.com) or a relative path (e.g. /developers)",
+				}),
+		),
 
 	/**
 	 * Display text for the link.
@@ -58,9 +82,8 @@ export type LlmsTxtManualLink = z.infer<typeof LlmsTxtManualLinkSchema>;
  * MDX handling policy.
  * - "skip": Don't include MDX entries, emit a warning to the console.
  * - "raw": Include the raw .mdx source file content as the mirror body.
- * - "strip": Attempt to strip Astro components (requires rehype/remark; not yet implemented, treated as "skip").
  */
-export const MdxPolicySchema = z.enum(["skip", "raw", "strip"]).default("skip");
+export const MdxPolicySchema = z.enum(["skip", "raw"]).default("skip");
 
 export type MdxPolicy = z.infer<typeof MdxPolicySchema>;
 

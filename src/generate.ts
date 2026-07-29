@@ -8,8 +8,10 @@ import {
 	buildLlmsFullTxt,
 	buildLlmsTxt,
 	buildMirrorFile,
+	buildMirrorUrl,
 	groupBySection,
 	isEntryIncluded,
+	normalizeDate,
 } from "./utils.js";
 
 /**
@@ -68,21 +70,14 @@ export function generate(
 		const mdEntries: CollectionEntry<string>[] = [];
 		for (const entry of included) {
 			if (entry.rawFilename?.endsWith(".mdx")) {
-				switch (options.mdxPolicy) {
-					case "skip":
-						warnings.push(
-							`Skipping MDX entry "${entry.slug}" in collection "${collectionName}" (mdxPolicy: "skip"). Use .md files for LLM surfaces.`,
-						);
-						continue;
-					case "raw":
-						mdEntries.push(entry);
-						break;
-					case "strip":
-						warnings.push(
-							`MDX entry "${entry.slug}" cannot be stripped (strip not yet implemented). Skipping.`,
-						);
-						continue;
+				if (options.mdxPolicy === "skip") {
+					warnings.push(
+						`Skipping MDX entry "${entry.slug}" in collection "${collectionName}" (mdxPolicy: "skip"). Use .md files for LLM surfaces.`,
+					);
+					continue;
 				}
+				// "raw" — include the raw .mdx source as the mirror body
+				mdEntries.push(entry);
 			} else {
 				mdEntries.push(entry);
 			}
@@ -91,14 +86,14 @@ export function generate(
 		// Group by section
 		const grouped = groupBySection(mdEntries, collectionSection);
 		for (const [sectionName, sectionEntries] of grouped) {
-			// Sort entries by date if available, then by slug
+			// Sort entries by date (descending), then by slug (ascending) as tiebreak
 			sectionEntries.sort((a, b) => {
-				const dateA = (a.data as Record<string, unknown>).date as
-					| string
-					| undefined;
-				const dateB = (b.data as Record<string, unknown>).date as
-					| string
-					| undefined;
+				const dateA = normalizeDate(
+					(a.data as Record<string, unknown>).date,
+				);
+				const dateB = normalizeDate(
+					(b.data as Record<string, unknown>).date,
+				);
 				if (dateA && dateB) {
 					if (dateA < dateB) return 1;
 					if (dateA > dateB) return -1;
@@ -133,7 +128,11 @@ export function generate(
 	// Build per-entry mirrors
 	for (const section of sections) {
 		for (const entry of section.entries) {
-			const mirrorPath = `${options.mirrorsPath}${entry.collection}/${entry.slug}.md`;
+			const mirrorPath = buildMirrorUrl(
+				options.mirrorsPath,
+				entry.collection,
+				entry.slug,
+			);
 			const mirrorContent = buildMirrorFile(entry);
 			mirrors.set(mirrorPath, mirrorContent);
 		}

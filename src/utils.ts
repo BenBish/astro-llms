@@ -4,6 +4,49 @@ import type { CollectionEntry } from "astro:content";
 import type { LlmFields } from "./llmFields.js";
 
 /**
+ * Normalize a date value to an ISO-8601 string for consistent sorting.
+ * Accepts strings, Date objects, or numeric timestamps.
+ */
+export function normalizeDate(value: unknown): string | undefined {
+	if (value instanceof Date) {
+		return value.toISOString();
+	}
+	if (typeof value === "number") {
+		return new Date(value).toISOString();
+	}
+	if (typeof value === "string") {
+		// Already a string — return as-is if it looks like a valid date,
+		// otherwise return undefined so entry falls to slug-based tiebreak.
+		const d = new Date(value);
+		return isNaN(d.getTime()) ? undefined : d.toISOString();
+	}
+	return undefined;
+}
+
+/**
+ * Build the mirror URL for an entry.
+ */
+export function buildMirrorUrl(
+	mirrorsPath: string,
+	collection: string,
+	slug: string,
+): string {
+	return `${mirrorsPath}${collection}/${slug}.md`;
+}
+
+/**
+ * Escape a string value for safe inclusion in YAML frontmatter.
+ * Escapes double quotes, backslashes, and newlines.
+ */
+export function escapeYamlValue(value: string): string {
+	return value
+		.replace(/\\/g, "\\\\")
+		.replace(/"/g, '\\"')
+		.replace(/\n/g, "\\n")
+		.replace(/\r/g, "\\r");
+}
+
+/**
  * Type guard: check if an entry has llmFields shape.
  */
 export function hasLlmFields(
@@ -144,8 +187,11 @@ export function buildLlmsTxt(
 		lines.push(`## ${section.name}`);
 		lines.push("");
 		for (const entry of section.entries) {
-			const slug = entry.slug;
-			const mirrorUrl = `${section.mirrorsPath}${entry.collection}/${slug}.md`;
+			const mirrorUrl = buildMirrorUrl(
+				section.mirrorsPath,
+				entry.collection,
+				entry.slug,
+			);
 			const description = getEntryDescription(entry);
 			const suffix = description ? `: ${description}` : "";
 			lines.push(`- [${entry.data.title}](${mirrorUrl})${suffix}`);
@@ -195,14 +241,14 @@ export function buildMirrorFile(
 
 	// Frontmatter
 	lines.push("---");
-	lines.push(`title: "${entry.data.title}"`);
+	lines.push(`title: "${escapeYamlValue(String(entry.data.title))}"`);
 	const description = getEntryDescription(entry);
 	if (description) {
-		lines.push(`description: "${description}"`);
+		lines.push(`description: "${escapeYamlValue(description)}"`);
 	}
 	const date = (entry.data as Record<string, unknown>).date;
 	if (date) {
-		lines.push(`date: "${String(date)}"`);
+		lines.push(`date: "${escapeYamlValue(String(date))}"`);
 	}
 	lines.push("---");
 	lines.push("");
