@@ -14,7 +14,8 @@ function getConfig(): LlmsTxtOptions | undefined {
 		const configPath = join(projectRoot, ".astro-llms-config.json");
 		if (!existsSync(configPath)) return undefined;
 		return JSON.parse(readFileSync(configPath, "utf-8")) as LlmsTxtOptions;
-	} catch {
+	} catch (err) {
+		console.error("[astro-llms] Failed to read config:", err);
 		return undefined;
 	}
 }
@@ -37,24 +38,40 @@ function getProjectRoot(): string {
 }
 
 /**
- * Queue a mirror file by writing to the temporary registry.
+ * In-memory mirror registry, flushed to disk once per page render.
+ * Batched to avoid N file I/O operations for sites with many entries.
  */
-function queueMirror(path: string, content: string): void {
+const pendingMirrors: Record<string, string> = {};
+
+/**
+ * Flush the in-memory mirror registry to the temporary file.
+ */
+function flushMirrors(): void {
+	if (Object.keys(pendingMirrors).length === 0) return;
 	const projectRoot = getProjectRoot();
 	const registryPath = join(projectRoot, REGISTRY_FILE);
-	let registry: Record<string, string> = {};
+	let existing: Record<string, string> = {};
 	if (existsSync(registryPath)) {
-		registry = JSON.parse(readFileSync(registryPath, "utf-8"));
+		existing = JSON.parse(readFileSync(registryPath, "utf-8"));
 	}
-	registry[path] = content;
-	writeFileSync(registryPath, JSON.stringify(registry));
+	const merged = { ...existing, ...pendingMirrors };
+	writeFileSync(registryPath, JSON.stringify(merged));
+	// Reset for potential subsequent renders (e.g., full-text endpoint)
+	Object.keys(pendingMirrors).forEach((k) => delete pendingMirrors[k]);
+}
+
+/**
+ * Queue a mirror file in the in-memory buffer.
+ */
+function queueMirror(path: string, content: string): void {
+	pendingMirrors[path] = content;
 }
 
 /**
  * Shared page endpoint builder for /llms.txt and /llms-full.txt.
  *
  * Both endpoints follow the same pattern:
- * 1. Parse config from Vite define
+ * 1. Read config from temp file
  * 2. Load collections
  * 3. Generate artifacts
  * 4. Queue mirrors to a temporary file
@@ -97,6 +114,7 @@ export function buildLlmsPage(
 		for (const [path, content] of result.mirrors) {
 			queueMirror(path, content);
 		}
+		flushMirrors();
 
 		// Emit warnings if any
 		for (const warning of result.warnings) {
