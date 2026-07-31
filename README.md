@@ -62,7 +62,9 @@ export default defineConfig({
 
 ### 3. Mark entries for inclusion
 
-In your Markdown frontmatter:
+With `defaultInclude: true`, all entries are included automatically — no frontmatter flag needed.
+
+With `defaultInclude: false` (the default), opt entries in with `llm: true`:
 
 ```yaml
 ---
@@ -111,7 +113,7 @@ This produces:
 
 | Field | Type | Default | Description |
 | --- | --- | --- | --- |
-| `llm` | `boolean` | `false` | Opt-in flag to include in agent surfaces |
+| `llm` | `boolean` | — (optional) | Opt-in flag to include in agent surfaces. Entries without `llm` fall through to the integration's `defaultInclude` setting. |
 | `llmSection` | `string` | collection section | Override the section name for this entry |
 | `llmDescription` | `string` | `description` field | Override the description shown in the index |
 
