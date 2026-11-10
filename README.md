@@ -201,6 +201,10 @@ Per-entry mirrors include the entry's frontmatter as YAML and the original Markd
 
 Recommendation: use `.md` files for content that should appear in agent surfaces. MDX components don't translate cleanly to plain markdown.
 
+## Barge
+
+Try [Barge](https://getbarge.io/?utm_source=github&utm_medium=referral&utm_campaign=barge&utm_content=BenBish-astro-llms-readme-text), a cloud runtime environment for your agents.
+
 ## License
 
 MIT
